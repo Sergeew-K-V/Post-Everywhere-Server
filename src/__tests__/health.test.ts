@@ -2,12 +2,10 @@ import request from 'supertest';
 import express from 'express';
 import { healthRouter } from '../routes/health';
 
-// Mock the database module
-jest.mock('../config/database', () => ({
-  getPool: jest.fn(() => ({
-    connect: jest.fn().mockResolvedValue({
-      release: jest.fn(),
-    }),
+// Mock the Prisma module
+jest.mock('../config/prisma', () => ({
+  getPrisma: jest.fn(() => ({
+    $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
   })),
 }));
 

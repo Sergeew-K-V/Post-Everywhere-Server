@@ -7,7 +7,7 @@ import { notFoundHandler } from './middleware/notFoundHandler';
 import { healthRouter } from './routes/health';
 import { authRouter } from './routes/auth';
 import { postsRouter } from './routes/posts';
-import { connectDatabase } from './config/database';
+import { connectDatabase, closeDatabase } from './config/prisma';
 
 // Load environment variables
 dotenv.config();
@@ -55,13 +55,15 @@ async function startServer() {
 }
 
 // Handle graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('🛑 SIGTERM received, shutting down gracefully');
+  await closeDatabase();
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('🛑 SIGINT received, shutting down gracefully');
+  await closeDatabase();
   process.exit(0);
 });
 

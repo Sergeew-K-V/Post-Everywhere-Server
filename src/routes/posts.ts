@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { getPool } from '../config/database';
+import { getPrisma } from '../config/prisma';
 import { validateRequest } from '../middleware/validation';
 import {
   createPostSchema,
@@ -13,18 +13,32 @@ const router = Router();
 // Get all posts
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const pool = getPool();
-    const result = await pool.query(`
-      SELECT p.id, p.title, p.content, p.created_at, p.updated_at,
-             u.username as author_username
-      FROM posts p
-      JOIN users u ON p.user_id = u.id
-      ORDER BY p.created_at DESC
-    `);
+    const prisma = getPrisma();
+    const posts = await prisma.post.findMany({
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const formattedPosts = posts.map(post => ({
+      id: post.id,
+      title: post.title,
+      content: post.content,
+      created_at: post.createdAt,
+      updated_at: post.updatedAt,
+      author_username: post.user.username,
+    }));
 
     res.json({
       success: true,
-      data: result.rows,
+      data: formattedPosts,
     });
     return;
   } catch (error) {
@@ -44,20 +58,27 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const pool = getPool();
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Post ID is required' },
+        });
+      }
 
-      const result = await pool.query(
-        `
-      SELECT p.id, p.title, p.content, p.created_at, p.updated_at,
-             u.username as author_username
-      FROM posts p
-      JOIN users u ON p.user_id = u.id
-      WHERE p.id = $1
-    `,
-        [id]
-      );
+      const prisma = getPrisma();
 
-      if (result.rows.length === 0) {
+      const post = await prisma.post.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          user: {
+            select: {
+              username: true,
+            },
+          },
+        },
+      });
+
+      if (!post) {
         res.status(404).json({
           success: false,
           error: { message: 'Post not found' },
@@ -65,9 +86,18 @@ router.get(
         return;
       }
 
+      const formattedPost = {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        created_at: post.createdAt,
+        updated_at: post.updatedAt,
+        author_username: post.user.username,
+      };
+
       res.json({
         success: true,
-        data: result.rows[0],
+        data: formattedPost,
       });
       return;
     } catch (error) {
@@ -89,19 +119,31 @@ router.post(
     try {
       const { title, content } = req.body;
       const userId = 1; // TODO: Get from JWT token
-      const pool = getPool();
+      const prisma = getPrisma();
 
-      const result = await pool.query(
-        'INSERT INTO posts (user_id, title, content) VALUES ($1, $2, $3) RETURNING id, title, content, created_at',
-        [userId, title, content]
-      );
-
-      const post = result.rows[0];
+      const post = await prisma.post.create({
+        data: {
+          userId,
+          title,
+          content,
+        },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          createdAt: true,
+        },
+      });
 
       res.status(201).json({
         success: true,
         message: 'Post created successfully',
-        data: post,
+        data: {
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          created_at: post.createdAt,
+        },
       });
       return;
     } catch (error) {
@@ -122,16 +164,29 @@ router.put(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Post ID is required' },
+        });
+      }
+
       const { title, content } = req.body;
       const userId = 1; // TODO: Get from JWT token
-      const pool = getPool();
+      const prisma = getPrisma();
 
-      const result = await pool.query(
-        'UPDATE posts SET title = $1, content = $2 WHERE id = $3 AND user_id = $4 RETURNING id, title, content, updated_at',
-        [title, content, id, userId]
-      );
+      const post = await prisma.post.updateMany({
+        where: {
+          id: parseInt(id),
+          userId,
+        },
+        data: {
+          title,
+          content,
+        },
+      });
 
-      if (result.rows.length === 0) {
+      if (post.count === 0) {
         res.status(404).json({
           success: false,
           error: { message: 'Post not found or unauthorized' },
@@ -139,10 +194,25 @@ router.put(
         return;
       }
 
+      const updatedPost = await prisma.post.findUnique({
+        where: { id: parseInt(id) },
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          updatedAt: true,
+        },
+      });
+
       res.json({
         success: true,
         message: 'Post updated successfully',
-        data: result.rows[0],
+        data: {
+          id: updatedPost!.id,
+          title: updatedPost!.title,
+          content: updatedPost!.content,
+          updated_at: updatedPost!.updatedAt,
+        },
       });
       return;
     } catch (error) {
@@ -163,15 +233,24 @@ router.delete(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Post ID is required' },
+        });
+      }
+
       const userId = 1; // TODO: Get from JWT token
-      const pool = getPool();
+      const prisma = getPrisma();
 
-      const result = await pool.query(
-        'DELETE FROM posts WHERE id = $1 AND user_id = $2 RETURNING id',
-        [id, userId]
-      );
+      const post = await prisma.post.deleteMany({
+        where: {
+          id: parseInt(id),
+          userId,
+        },
+      });
 
-      if (result.rows.length === 0) {
+      if (post.count === 0) {
         res.status(404).json({
           success: false,
           error: { message: 'Post not found or unauthorized' },

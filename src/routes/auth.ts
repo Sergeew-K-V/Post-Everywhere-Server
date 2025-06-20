@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt, { Secret } from 'jsonwebtoken';
-import { getPool } from '../config/database';
+import { getPrisma } from '../config/prisma';
 import { validateRequest } from '../middleware/validation';
 import { registerSchema, loginSchema } from '../schemas/auth';
 
@@ -14,15 +14,16 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { username, email, password } = req.body;
-      const pool = getPool();
+      const prisma = getPrisma();
 
       // Check if user already exists
-      const existingUser = await pool.query(
-        'SELECT id FROM users WHERE email = $1 OR username = $2',
-        [email, username]
-      );
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [{ email }, { username }],
+        },
+      });
 
-      if (existingUser.rows.length > 0) {
+      if (existingUser) {
         return res.status(409).json({
           success: false,
           error: { message: 'User already exists' },
@@ -34,12 +35,19 @@ router.post(
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Create user
-      const result = await pool.query(
-        'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
-        [username, email, passwordHash]
-      );
-
-      const user = result.rows[0];
+      const user = await prisma.user.create({
+        data: {
+          username,
+          email,
+          passwordHash,
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          createdAt: true,
+        },
+      });
 
       res.status(201).json({
         success: true,
@@ -48,7 +56,7 @@ router.post(
           id: user.id,
           username: user.username,
           email: user.email,
-          created_at: user.created_at,
+          created_at: user.createdAt,
         },
       });
       return;
@@ -70,28 +78,28 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-      const pool = getPool();
+      const prisma = getPrisma();
 
       // Find user
-      const result = await pool.query(
-        'SELECT id, username, email, password_hash FROM users WHERE email = $1',
-        [email]
-      );
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          passwordHash: true,
+        },
+      });
 
-      if (result.rows.length === 0) {
+      if (!user) {
         return res.status(401).json({
           success: false,
           error: { message: 'Invalid credentials' },
         });
       }
 
-      const user = result.rows[0];
-
       // Verify password
-      const isValidPassword = await bcrypt.compare(
-        password,
-        user.password_hash
-      );
+      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
