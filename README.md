@@ -329,3 +329,131 @@ Use conventional commit format:
 ## License
 
 MIT License - see LICENSE file for details
+
+## API Documentation
+
+### Authentication Endpoints
+
+#### Register User
+
+- **POST** `/auth/register`
+- **Description**: Register a new user
+- **Request Body**:
+  ```json
+  {
+    "username": "string (3-50 characters)",
+    "email": "string (valid email format)",
+    "password": "string (6-100 characters)"
+  }
+  ```
+- **Response** (201):
+  ```json
+  {
+    "success": true,
+    "message": "User created successfully",
+    "data": {
+      "id": 1,
+      "username": "testuser",
+      "email": "test@example.com",
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  }
+  ```
+- **Error Responses**:
+  - `400` - Validation error
+  - `409` - User already exists
+  - `500` - Internal server error
+
+#### Login User
+
+- **POST** `/auth/login`
+- **Description**: Login with email and password
+- **Request Body**:
+  ```json
+  {
+    "email": "string (valid email format)",
+    "password": "string"
+  }
+  ```
+- **Response** (200):
+  ```json
+  {
+    "success": true,
+    "message": "Login successful",
+    "data": {
+      "token": "jwt_token_here",
+      "user": {
+        "id": 1,
+        "username": "testuser",
+        "email": "test@example.com"
+      }
+    }
+  }
+  ```
+- **Error Responses**:
+  - `400` - Validation error
+  - `401` - Invalid credentials
+  - `500` - Internal server error
+
+## Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Copy environment file:
+   ```bash
+   cp env.example .env
+   ```
+4. Update `.env` with your configuration
+5. Generate Prisma client:
+   ```bash
+   npm run prisma:generate
+   ```
+6. Run database migrations:
+   ```bash
+   npm run prisma:migrate
+   ```
+
+## Development
+
+Start development server:
+
+```bash
+npm run dev
+```
+
+Run tests:
+
+```bash
+npm test
+```
+
+## Production
+
+Build the application:
+
+```bash
+npm run build
+```
+
+Start production server:
+
+```bash
+npm start
+```
+
+## Docker
+
+Build Docker image:
+
+```bash
+npm run docker:build
+```
+
+Run with Docker Compose:
+
+```bash
+docker-compose up
+```

@@ -28,8 +28,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/health', healthRouter);
-app.use('/auth', authRouter);
-app.use('/posts', postsRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/posts', postsRouter);
 
 // Error handling middleware
 app.use(notFoundHandler);
