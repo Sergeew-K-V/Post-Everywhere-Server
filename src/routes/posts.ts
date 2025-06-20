@@ -1,6 +1,12 @@
 import { Router, Request, Response } from 'express';
-import { body, validationResult } from 'express-validator';
 import { getPool } from '../config/database';
+import { validateRequest } from '../middleware/validation';
+import {
+  createPostSchema,
+  updatePostSchema,
+  getPostSchema,
+  deletePostSchema,
+} from '../schemas/posts';
 
 const router = Router();
 
@@ -32,63 +38,55 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Get single post
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const pool = getPool();
+router.get(
+  '/:id',
+  validateRequest(getPostSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const pool = getPool();
 
-    const result = await pool.query(
-      `
+      const result = await pool.query(
+        `
       SELECT p.id, p.title, p.content, p.created_at, p.updated_at,
              u.username as author_username
       FROM posts p
       JOIN users u ON p.user_id = u.id
       WHERE p.id = $1
     `,
-      [id]
-    );
+        [id]
+      );
 
-    if (result.rows.length === 0) {
-      res.status(404).json({
-        success: false,
-        error: { message: 'Post not found' },
-      });
-      return;
-    }
-
-    res.json({
-      success: true,
-      data: result.rows[0],
-    });
-    return;
-  } catch (error) {
-    console.error('Get post error:', error);
-    res.status(500).json({
-      success: false,
-      error: { message: 'Internal server error' },
-    });
-    return;
-  }
-});
-
-// Create post
-router.post(
-  '/',
-  [
-    body('title').isLength({ min: 1, max: 255 }).trim().escape(),
-    body('content').isLength({ min: 1 }).trim(),
-  ],
-  async (req: Request, res: Response) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(400).json({
+      if (result.rows.length === 0) {
+        res.status(404).json({
           success: false,
-          error: { message: 'Validation failed', details: errors.array() },
+          error: { message: 'Post not found' },
         });
         return;
       }
 
+      res.json({
+        success: true,
+        data: result.rows[0],
+      });
+      return;
+    } catch (error) {
+      console.error('Get post error:', error);
+      res.status(500).json({
+        success: false,
+        error: { message: 'Internal server error' },
+      });
+      return;
+    }
+  }
+);
+
+// Create post
+router.post(
+  '/',
+  validateRequest(createPostSchema),
+  async (req: Request, res: Response) => {
+    try {
       const { title, content } = req.body;
       const userId = 1; // TODO: Get from JWT token
       const pool = getPool();
@@ -120,21 +118,9 @@ router.post(
 // Update post
 router.put(
   '/:id',
-  [
-    body('title').isLength({ min: 1, max: 255 }).trim().escape(),
-    body('content').isLength({ min: 1 }).trim(),
-  ],
+  validateRequest(updatePostSchema),
   async (req: Request, res: Response) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(400).json({
-          success: false,
-          error: { message: 'Validation failed', details: errors.array() },
-        });
-        return;
-      }
-
       const { id } = req.params;
       const { title, content } = req.body;
       const userId = 1; // TODO: Get from JWT token
@@ -171,38 +157,42 @@ router.put(
 );
 
 // Delete post
-router.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const userId = 1; // TODO: Get from JWT token
-    const pool = getPool();
+router.delete(
+  '/:id',
+  validateRequest(deletePostSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = 1; // TODO: Get from JWT token
+      const pool = getPool();
 
-    const result = await pool.query(
-      'DELETE FROM posts WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, userId]
-    );
+      const result = await pool.query(
+        'DELETE FROM posts WHERE id = $1 AND user_id = $2 RETURNING id',
+        [id, userId]
+      );
 
-    if (result.rows.length === 0) {
-      res.status(404).json({
+      if (result.rows.length === 0) {
+        res.status(404).json({
+          success: false,
+          error: { message: 'Post not found or unauthorized' },
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: 'Post deleted successfully',
+      });
+      return;
+    } catch (error) {
+      console.error('Delete post error:', error);
+      res.status(500).json({
         success: false,
-        error: { message: 'Post not found or unauthorized' },
+        error: { message: 'Internal server error' },
       });
       return;
     }
-
-    res.json({
-      success: true,
-      message: 'Post deleted successfully',
-    });
-    return;
-  } catch (error) {
-    console.error('Delete post error:', error);
-    res.status(500).json({
-      success: false,
-      error: { message: 'Internal server error' },
-    });
-    return;
   }
-});
+);
 
-export const postsRouter = router;
+export { router as postsRouter };

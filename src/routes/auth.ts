@@ -1,29 +1,18 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt, { Secret } from 'jsonwebtoken';
-import { body, validationResult } from 'express-validator';
 import { getPool } from '../config/database';
+import { validateRequest } from '../middleware/validation';
+import { registerSchema, loginSchema } from '../schemas/auth';
 
 const router = Router();
 
 // Register user
 router.post(
   '/register',
-  [
-    body('username').isLength({ min: 3 }).trim().escape(),
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
-  ],
+  validateRequest(registerSchema),
   async (req: Request, res: Response) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: { message: 'Validation failed', details: errors.array() },
-        });
-      }
-
       const { username, email, password } = req.body;
       const pool = getPool();
 
@@ -77,17 +66,9 @@ router.post(
 // Login user
 router.post(
   '/login',
-  [body('email').isEmail().normalizeEmail(), body('password').notEmpty()],
+  validateRequest(loginSchema),
   async (req: Request, res: Response) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: { message: 'Validation failed', details: errors.array() },
-        });
-      }
-
       const { email, password } = req.body;
       const pool = getPool();
 
@@ -146,4 +127,4 @@ router.post(
   }
 );
 
-export const authRouter = router;
+export { router as authRouter };
