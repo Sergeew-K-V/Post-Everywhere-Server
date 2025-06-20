@@ -33,4 +33,4 @@ export const closeDatabase = async (): Promise<void> => {
   if (pool) {
     await pool.end();
   }
-}; 
+};

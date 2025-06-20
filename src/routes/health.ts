@@ -26,4 +26,4 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-export const healthRouter = router; 
+export const healthRouter = router;

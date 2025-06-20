@@ -20,12 +20,14 @@ router.get('/', async (req: Request, res: Response) => {
       success: true,
       data: result.rows,
     });
+    return;
   } catch (error) {
     console.error('Get posts error:', error);
     res.status(500).json({
       success: false,
       error: { message: 'Internal server error' },
     });
+    return;
   }
 });
 
@@ -34,32 +36,38 @@ router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const pool = getPool();
-    
-    const result = await pool.query(`
+
+    const result = await pool.query(
+      `
       SELECT p.id, p.title, p.content, p.created_at, p.updated_at,
              u.username as author_username
       FROM posts p
       JOIN users u ON p.user_id = u.id
       WHERE p.id = $1
-    `, [id]);
+    `,
+      [id]
+    );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: { message: 'Post not found' },
       });
+      return;
     }
 
     res.json({
       success: true,
       data: result.rows[0],
     });
+    return;
   } catch (error) {
     console.error('Get post error:', error);
     res.status(500).json({
       success: false,
       error: { message: 'Internal server error' },
     });
+    return;
   }
 });
 
@@ -74,10 +82,11 @@ router.post(
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: { message: 'Validation failed', details: errors.array() },
         });
+        return;
       }
 
       const { title, content } = req.body;
@@ -96,12 +105,14 @@ router.post(
         message: 'Post created successfully',
         data: post,
       });
+      return;
     } catch (error) {
       console.error('Create post error:', error);
       res.status(500).json({
         success: false,
         error: { message: 'Internal server error' },
       });
+      return;
     }
   }
 );
@@ -117,10 +128,11 @@ router.put(
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: { message: 'Validation failed', details: errors.array() },
         });
+        return;
       }
 
       const { id } = req.params;
@@ -134,10 +146,11 @@ router.put(
       );
 
       if (result.rows.length === 0) {
-        return res.status(404).json({
+        res.status(404).json({
           success: false,
           error: { message: 'Post not found or unauthorized' },
         });
+        return;
       }
 
       res.json({
@@ -145,12 +158,14 @@ router.put(
         message: 'Post updated successfully',
         data: result.rows[0],
       });
+      return;
     } catch (error) {
       console.error('Update post error:', error);
       res.status(500).json({
         success: false,
         error: { message: 'Internal server error' },
       });
+      return;
     }
   }
 );
@@ -168,23 +183,26 @@ router.delete('/:id', async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: { message: 'Post not found or unauthorized' },
       });
+      return;
     }
 
     res.json({
       success: true,
       message: 'Post deleted successfully',
     });
+    return;
   } catch (error) {
     console.error('Delete post error:', error);
     res.status(500).json({
       success: false,
       error: { message: 'Internal server error' },
     });
+    return;
   }
 });
 
-export const postsRouter = router; 
+export const postsRouter = router;

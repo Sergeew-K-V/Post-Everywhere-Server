@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import { getPool } from '../config/database';
 
@@ -62,12 +62,14 @@ router.post(
           created_at: user.created_at,
         },
       });
+      return;
     } catch (error) {
       console.error('Registration error:', error);
       res.status(500).json({
         success: false,
         error: { message: 'Internal server error' },
       });
+      return;
     }
   }
 );
@@ -75,10 +77,7 @@ router.post(
 // Login user
 router.post(
   '/login',
-  [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty(),
-  ],
+  [body('email').isEmail().normalizeEmail(), body('password').notEmpty()],
   async (req: Request, res: Response) => {
     try {
       const errors = validationResult(req);
@@ -108,7 +107,10 @@ router.post(
       const user = result.rows[0];
 
       // Verify password
-      const isValidPassword = await bcrypt.compare(password, user.password_hash);
+      const isValidPassword = await bcrypt.compare(
+        password,
+        user.password_hash
+      );
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
@@ -117,11 +119,8 @@ router.post(
       }
 
       // Generate JWT token
-      const token = jwt.sign(
-        { userId: user.id, email: user.email },
-        process.env.JWT_SECRET || 'fallback-secret',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-      );
+      const jwtSecret: Secret = process.env.JWT_SECRET || 'fallback-secret';
+      const token = jwt.sign({ userId: user.id, email: user.email }, jwtSecret);
 
       res.json({
         success: true,
@@ -135,14 +134,16 @@ router.post(
           },
         },
       });
+      return;
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({
         success: false,
         error: { message: 'Internal server error' },
       });
+      return;
     }
   }
 );
 
-export const authRouter = router; 
+export const authRouter = router;

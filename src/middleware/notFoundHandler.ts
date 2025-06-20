@@ -7,4 +7,4 @@ export const notFoundHandler = (req: Request, res: Response): void => {
       message: `Route ${req.originalUrl} not found`,
     },
   });
-}; 
+};
