@@ -1,0 +1,132 @@
+# Cursor Rules for Post Everywhere Server
+
+## Project Overview
+
+This is a TypeScript backend server built with Express.js, Prisma ORM, and PostgreSQL. The project follows a modular architecture with clear separation of concerns.
+
+## Code Style & Standards
+
+### TypeScript
+
+- Use strict TypeScript configuration (already configured in tsconfig.json)
+- Prefer explicit types over `any`
+- Use interfaces for object shapes and types for unions/primitives
+- Always handle async/await properly with try-catch blocks
+- Use proper error handling with custom error classes
+
+### Naming Conventions
+
+- Use camelCase for variables, functions, and properties
+- Use PascalCase for classes, interfaces, and type names
+- Use UPPER_SNAKE_CASE for constants
+- Use kebab-case for file names (except for TypeScript files which use camelCase)
+- Database columns use snake_case (handled by Prisma mappings)
+
+### File Structure
+
+- Keep files focused on single responsibility
+- Group related functionality in directories
+- Use index files for clean exports
+- Place tests in `__tests__` directories alongside source files
+
+## Architecture Guidelines
+
+### Routes
+
+- Keep route handlers thin - delegate business logic to services
+- Use middleware for authentication, validation, and error handling
+- Validate all inputs using Zod schemas
+- Return consistent JSON responses with proper HTTP status codes
+
+### Database & Prisma
+
+- Use Prisma Client for all database operations
+- Keep database schema in `prisma/schema.prisma`
+- Use migrations for schema changes
+- Implement proper error handling for database operations
+- Use transactions when multiple operations need to be atomic
+
+### Middleware
+
+- Implement proper error handling middleware
+- Use validation middleware for request validation
+- Implement authentication middleware for protected routes
+- Use CORS and Helmet for security
+
+### Configuration
+
+- Use environment variables for configuration
+- Keep sensitive data in `.env` files (not committed to git)
+- Use dotenv for environment variable loading
+
+## Security Best Practices
+
+- Hash passwords using bcryptjs
+- Use JWT for authentication
+- Implement proper CORS configuration
+- Use Helmet for security headers
+- Validate and sanitize all user inputs
+- Use parameterized queries (handled by Prisma)
+
+## Testing
+
+- Write unit tests for all business logic
+- Use Jest as the testing framework
+- Test both success and error scenarios
+- Mock external dependencies
+- Maintain good test coverage
+
+## Error Handling
+
+- Use custom error classes for different error types
+- Implement proper error logging
+- Return user-friendly error messages
+- Handle both expected and unexpected errors
+- Use proper HTTP status codes
+
+## Performance
+
+- Implement proper database indexing
+- Use connection pooling for database connections
+- Implement caching where appropriate
+- Monitor and optimize slow queries
+- Use proper pagination for large datasets
+
+## Code Quality
+
+- Use ESLint for code linting
+- Use Prettier for code formatting
+- Write meaningful commit messages
+- Document complex business logic
+- Keep functions small and focused
+
+## Dependencies
+
+- Keep dependencies up to date
+- Use specific versions in package.json
+- Regularly audit dependencies for security issues
+- Prefer well-maintained packages with good documentation
+
+## Development Workflow
+
+- Use TypeScript for type safety
+- Implement proper logging
+- Use environment-specific configurations
+- Follow Git flow for version control
+- Use Docker for consistent development environments
+
+## Commit Messages
+
+- Use conventional commit format: `type: description`
+- Keep commit messages as concise as possible
+- Use lowercase for the type and description
+- Don't end with a period
+- Examples:
+  - `feat: add new Post entity`
+  - `refactor: validation for user`
+  - `feat: add integration with X`
+  - `fix: resolve authentication bug`
+  - `docs: update API documentation`
+  - `test: add unit tests for auth service`
+  - `chore: update dependencies`
+- Common types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `style`, `perf`, `ci`, `build`
