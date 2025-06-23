@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import { authRouter } from '../routes/auth';
+import { authRouter } from '../routes/auth.route';
 import { errorHandler } from '../middleware/errorHandler';
 import { getPrisma } from '../config/prisma';
 

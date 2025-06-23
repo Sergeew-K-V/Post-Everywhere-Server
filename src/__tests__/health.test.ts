@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { healthRouter } from '../routes/health';
+import { healthRouter } from '../routes/health.route';
 
 // Mock the Prisma module
 jest.mock('../config/prisma', () => ({

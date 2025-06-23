@@ -4,9 +4,9 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
-import { healthRouter } from './routes/health';
-import { authRouter } from './routes/auth';
-import { postsRouter } from './routes/posts';
+import { healthRouter } from './routes/health.route';
+import { authRouter } from './routes/auth.route';
+import { postsRouter } from './routes/posts.route';
 import { connectDatabase, closeDatabase } from './config/prisma';
 
 // Load environment variables

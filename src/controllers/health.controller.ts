@@ -1,9 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { getPrisma } from '../config/prisma';
 
-const router = Router();
-
-router.get('/', async (req: Request, res: Response) => {
+/**
+ * Health check endpoint
+ */
+export async function healthCheck(req: Request, res: Response): Promise<void> {
   try {
     // Test database connection
     const prisma = getPrisma();
@@ -23,6 +24,4 @@ router.get('/', async (req: Request, res: Response) => {
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
-});
-
-export const healthRouter = router;
+}
