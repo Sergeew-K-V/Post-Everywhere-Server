@@ -50,7 +50,6 @@ describe('Auth Middleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.JWT_SECRET = jwtSecret;
   });
 
   describe('authenticateToken', () => {

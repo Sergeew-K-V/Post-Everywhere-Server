@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { getPrisma } from '../config/prisma';
+import { env } from '../config/env';
 
 // Extend Express Request interface to include user
 declare global {
@@ -38,10 +39,8 @@ export const authenticateToken = async (
       return;
     }
 
-    const jwtSecret: string = process.env.JWT_SECRET || 'fallback-secret';
-
     try {
-      const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+      const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
       // Verify user still exists in database
       const prisma = getPrisma();
@@ -97,10 +96,8 @@ export const optionalAuth = async (
       return;
     }
 
-    const jwtSecret: string = process.env.JWT_SECRET || 'fallback-secret';
-
     try {
-      const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+      const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
       const prisma = getPrisma();
       const user = await prisma.user.findUnique({

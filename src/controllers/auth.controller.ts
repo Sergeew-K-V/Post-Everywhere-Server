@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt, { Secret } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { getPrisma } from '../config/prisma';
+import { env } from '../config/env';
 
 /**
  * Register a new user
@@ -102,8 +103,10 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     // Generate JWT token
-    const jwtSecret: Secret = process.env.JWT_SECRET || 'fallback-secret';
-    const token = jwt.sign({ userId: user.id, email: user.email }, jwtSecret);
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      env.JWT_SECRET as jwt.Secret
+    );
 
     res.json({
       success: true,

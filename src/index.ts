@@ -8,18 +8,18 @@ import { healthRouter } from './routes/health.route';
 import { authRouter } from './routes/auth.route';
 import { postsRouter } from './routes/posts.route';
 import { connectDatabase, closeDatabase } from './config/prisma';
+import { env } from './config/env';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: env.CORS_ORIGIN,
     credentials: true,
   })
 );
@@ -43,10 +43,10 @@ async function startServer() {
     console.log('✅ Database connected successfully');
 
     // Start listening
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+    app.listen(env.PORT, () => {
+      console.log(`🚀 Server running on port ${env.PORT}`);
+      console.log(`📊 Environment: ${env.NODE_ENV}`);
+      console.log(`🔗 Health check: http://localhost:${env.PORT}/health`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

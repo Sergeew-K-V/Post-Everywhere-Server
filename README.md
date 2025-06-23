@@ -162,12 +162,63 @@ CORS_ORIGIN=http://localhost:3000
 LOG_LEVEL=info
 ```
 
-## Database Schema
+## Configuration Management
 
-The database schema is managed through Prisma ORM. See `prisma/schema.prisma` for the complete schema definition.
+The application uses [envalid](https://github.com/af/envalid) for type-safe environment variable validation. This ensures that:
 
-### Users Table
+- All required environment variables are present
+- Variables have the correct types (string, number, boolean, etc.)
+- Enum values are validated (e.g., NODE_ENV must be 'development', 'production', or 'test')
+- URLs are validated for proper format
+- Port numbers are validated as integers
 
+### Configuration Structure
+
+The configuration is defined in `src/config/env.ts`:
+
+```typescript
+import { cleanEnv, str, port, url, bool } from 'envalid';
+
+export const env = cleanEnv(process.env, {
+  // Server configuration
+  NODE_ENV: str({ choices: ['development', 'production', 'test'] }),
+  PORT: port({ default: 8080 }),
+
+  // Database configuration
+  DATABASE_URL: str(),
+
+  // JWT configuration
+  JWT_SECRET: str(),
+  JWT_EXPIRES_IN: str({ default: '7d' }),
+
+  // CORS configuration
+  CORS_ORIGIN: url({ default: 'http://localhost:3000' }),
+
+  // Optional configurations
+  LOG_LEVEL: str({
+    choices: ['error', 'warn', 'info', 'debug'],
+    default: 'info',
+  }),
+  ENABLE_LOGGING: bool({ default: true }),
+});
+```
+
+### Benefits
+
+- **Type Safety**: All environment variables are properly typed
+- **Validation**: Automatic validation of required fields and data types
+- **Defaults**: Sensible defaults for optional variables
+- **Error Messages**: Clear error messages when validation fails
+- **IDE Support**: Full IntelliSense support for configuration values
+
+### Usage in Code
+
+````typescript
+import { env } from './config/env';
+
+// Type-safe access to configuration
+const port = env.PORT; // number
+const jwtSecret = env.JWT_SECRET; // string
 ```sql
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -177,7 +228,7 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-```
+````
 
 ### Posts Table
 

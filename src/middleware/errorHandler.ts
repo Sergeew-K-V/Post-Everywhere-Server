@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { env } from '../config/env';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -14,7 +15,7 @@ export const errorHandler = (
   const message = error.message || 'Internal Server Error';
 
   // Log error in development
-  if (process.env.NODE_ENV === 'development') {
+  if (env.NODE_ENV === 'development') {
     console.error('Error:', error);
   }
 
@@ -22,7 +23,7 @@ export const errorHandler = (
     success: false,
     error: {
       message,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
+      ...(env.NODE_ENV === 'development' && { stack: error.stack }),
     },
   });
 };

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { getPrisma } from '../config/prisma';
+import { env } from '../config/env';
 
 /**
  * Health check endpoint
@@ -15,7 +16,7 @@ export async function healthCheck(req: Request, res: Response): Promise<void> {
       message: 'Server is healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development',
+      environment: env.NODE_ENV,
     });
   } catch (error) {
     res.status(503).json({
